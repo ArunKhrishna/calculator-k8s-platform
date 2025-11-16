@@ -49,7 +49,7 @@ services:
       ADD_SERVICE_URL: http://add-service:8001
       SUBTRACT_SERVICE_URL: http://subtract-service:8002
       MULTIPLY_SERVICE_URL: http://multiply-service:8003
-    serviceType: ClusterIP  # Changed from LoadBalancer
+    serviceType: LoadBalancer  
 
   - name: add-service
     enabled: true
