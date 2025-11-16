@@ -82,7 +82,7 @@ async def ready():
 
 @app.post("/multiply", response_model=CalculationResponse)
 @REQUEST_DURATION.time()
-async def multiply_numbers(calc: CalculationRequest):
+def multiply_numbers(calc: CalculationRequest):
     REQUEST_COUNT.inc()
     
     try:

@@ -82,7 +82,7 @@ async def ready():
 
 @app.post("/subtract", response_model=CalculationResponse)
 @REQUEST_DURATION.time()
-async def subtract_numbers(calc: CalculationRequest):
+def subtract_numbers(calc: CalculationRequest):
     REQUEST_COUNT.inc()
     
     try:

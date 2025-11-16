@@ -97,7 +97,7 @@ async def ready():
 
 @app.post("/add", response_model=CalculationResponse)
 @REQUEST_DURATION.time()
-async def add_numbers(calc: CalculationRequest):
+def add_numbers(calc: CalculationRequest):
     """Perform addition and store in database"""
     REQUEST_COUNT.inc()
     
