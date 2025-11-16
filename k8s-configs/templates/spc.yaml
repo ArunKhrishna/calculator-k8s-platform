@@ -1,0 +1,31 @@
+{{- range .Values.services }}
+{{- if and .needsDbAccess .awsSecretName }}
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: spc-{{ .name }}
+  namespace: {{ .namespace }}
+spec:
+  provider: aws
+  parameters:
+    region: {{ $.Values.global.region }}
+    objects: |
+      - objectName: "{{ .awsSecretName }}"
+        objectType: "secretsmanager"
+        objectVersionLabel: "AWSCURRENT"
+        jmesPath:
+          {{- range .secretKeys }}
+          - path: {{ . }}
+            objectAlias: {{ . }}
+          {{- end }}
+  secretObjects:
+    - secretName: {{ .name }}-csi
+      type: Opaque
+      data:
+        {{- range .secretKeys }}
+        - objectName: {{ . }}
+          key: {{ . }}
+        {{- end }}
+---
+{{- end }}
+{{- end }}

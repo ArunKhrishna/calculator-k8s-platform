@@ -1,3 +1,4 @@
+# terragrunt.hcl - Updated configuration with prefix delegation
 include "root" {
   path = find_in_parent_folders("root.hcl")
 }
@@ -44,20 +45,43 @@ inputs = {
   service_ipv4_cidr        = "172.20.0.0/16"
   
   node_role_arn              = dependency.iam.outputs.eks_node_group_role_arn
-  node_group_release_version = "1.31.2-20241112"
+  node_group_release_version = "1.31.13-20251103"
   
   node_groups = {
-    standard = {
-      name           = "qa-india-ng-x86-v131"
+    # Keep existing micro node group
+    micro = {
+      name           = "qa-eks-ng-micro-final"
       ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = ["t3a.medium"]
+      instance_types = ["t2.micro"]
       desired_size   = 2
-      max_size       = 3
-      min_size       = 1
+      max_size       = 2
+      min_size       = 2
       capacity_type  = "ON_DEMAND"
       disk_size      = 20
-      labels         = {}
-      taints         = []
+      labels = {
+        "node-type" = "micro"
+        "workload"  = "system"
+      }
+      taints = []
+      enable_node_repair = true
+    }
+    
+    # New medium node group with prefix delegation
+    medium = {
+      name           = "qa-eks-ng-medium-v2"
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["t3.medium"]
+      desired_size   = 2
+      max_size       = 4
+      min_size       = 2
+      capacity_type  = "ON_DEMAND"
+      disk_size      = 30
+      labels = {
+        "node-type" = "medium"
+        "workload"  = "general"
+        "env"       = "qa"
+      }
+      taints = []
       enable_node_repair = true
     }
   }
@@ -67,12 +91,34 @@ inputs = {
       addon_name    = "vpc-cni"
       addon_version = "v1.18.5-eksbuild.1"
       resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_update = "PRESERVE"
-      preserve = true
+      resolve_conflicts_on_update = "OVERWRITE"
+      preserve = false  # Changed from true to allow updates
+      configuration_values = jsonencode({
+        env = {
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET = "1"
+          ENABLE_POD_ENI = "true"
+        }
+      })
     }
     eks_pod_identity_agent = {
       addon_name    = "eks-pod-identity-agent"
       addon_version = "v1.3.2-eksbuild.2"
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_update = "PRESERVE"
+      preserve = true
+    }
+    # Optional: Add CoreDNS and kube-proxy
+    coredns = {
+      addon_name    = "coredns"
+      addon_version = "v1.11.3-eksbuild.2"
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_update = "PRESERVE"
+      preserve = true
+    }
+    kube_proxy = {
+      addon_name    = "kube-proxy"
+      addon_version = "v1.31.0-eksbuild.5"
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "PRESERVE"
       preserve = true
@@ -83,5 +129,6 @@ inputs = {
     Project    = "GLAD"
     Team       = "DevOps"
     CostCenter = "Engineering"
+    NodeGroup  = "medium-prefix-delegation"
   }
 }

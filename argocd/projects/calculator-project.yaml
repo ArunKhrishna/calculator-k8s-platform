@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: calculator
+  namespace: argocd
+spec:
+  description: Calculator microservices platform
+  
+  # Allow deployment to calculator namespace
+  destinations:
+  - namespace: calculator
+    server: https://kubernetes.default.svc
+  
+  # Allow pulling from your GitHub repo
+  sourceRepos:
+  - 'https://github.com/ArunKhrishna/calculator-k8s-platform.git'
+  
+  # Allow all resource types
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'

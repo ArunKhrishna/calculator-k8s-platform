@@ -1,0 +1,100 @@
+{{- range .Values.services }}
+{{- if .enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  namespace: {{ .namespace }}
+  labels:
+    app: {{ .name }}
+    version: v1
+spec:
+  replicas: {{ .replicas }}
+  revisionHistoryLimit: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .name }}
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .port | quote }}
+        prometheus.io/path: "/metrics"
+        {{- if .needsDbAccess }}
+        checksum/config: {{ $.Values.database | toYaml | sha256sum }}
+        {{- end }}
+    spec:
+      {{- if .serviceAccount.enabled }}
+      serviceAccountName: {{ $.Values.serviceAccount.name }}
+      {{- end }}
+      {{- if .needsDbAccess }}
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: spc-{{ .name }}
+      {{- end }}
+      containers:
+      - name: {{ .name }}
+        image: {{ .image.repository }}:{{ .image.tag }}
+        imagePullPolicy: {{ .imagePullPolicy }}
+        ports:
+        - containerPort: {{ .port }}
+          name: http
+        {{- if .needsDbAccess }}
+        volumeMounts:
+        - name: secrets-store-inline
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+        {{- end }}
+        envFrom:
+        - configMapRef:
+            name: calculator-config
+        {{- if .needsDbAccess }}
+        - secretRef:
+            name: {{ .name }}-csi
+        {{- end }}
+        resources:
+          requests:
+            cpu: {{ .resources.requests.cpu }}
+            memory: {{ .resources.requests.memory }}
+          limits:
+            cpu: {{ .resources.limits.cpu }}
+            memory: {{ .resources.limits.memory }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .port }}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: {{ .port }}
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - {{ .name }}
+              topologyKey: topology.kubernetes.io/zone
+---
+{{- end }}
+{{- end }}

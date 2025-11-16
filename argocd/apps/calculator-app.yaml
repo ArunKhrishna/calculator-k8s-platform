@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: calculator-platform-qa
+  namespace: argocd
+spec:
+  project: calculator
+  
+  source:
+    repoURL: https://github.com/ArunKhrishna/calculator-k8s-platform.git
+    targetRevision: main  # or master, depending on your default branch
+    path: helm-charts/calculator-platform
+    helm:
+      releaseName: calculator-platform
+      valueFiles:
+        - values-qa.yaml
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: calculator
+  
+  syncPolicy:
+    automated:
+      prune: true      # Delete resources removed from Git
+      selfHeal: true   # Auto-sync if cluster state drifts
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

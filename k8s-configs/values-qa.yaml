@@ -1,0 +1,125 @@
+# Global configuration
+global:
+  region: ap-south-1
+  accountId: "089580247689"
+  environment: qa
+  ecrRegistry: 089580247689.dkr.ecr.ap-south-1.amazonaws.com
+  imageTag: v1.0.0
+
+# Database configuration
+database:
+  host: qa-glad-aurora-cluster.cluster-c7qm0qcyyv66.ap-south-1.rds.amazonaws.com
+  port: "5432"
+  name: postgres
+  user: postgres
+  # Secret stored in AWS Secrets Manager
+  awsSecretName: qa-eks/calculator-db
+  secretKeys:
+    - DB_PASSWORD
+
+# Service Account with IRSA
+serviceAccount:
+  enabled: true
+  name: calculator-sa
+  # Create IAM role with this trust policy for Secrets Manager access
+  iamRoleArn: arn:aws:iam::089580247689:role/qa-eks-calculator-secrets-role
+
+# Services configuration
+services:
+  - name: calculator-api
+    enabled: true
+    namespace: calculator
+    replicas: 3
+    port: 8000
+    image:
+      repository: 089580247689.dkr.ecr.ap-south-1.amazonaws.com/calculator-api
+      tag: v1.0.0
+    imagePullPolicy: Always
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    # This service doesn't need DB access, only calls other services
+    needsDbAccess: false
+    serviceAccount:
+      enabled: false
+    env:
+      ADD_SERVICE_URL: http://add-service:8001
+      SUBTRACT_SERVICE_URL: http://subtract-service:8002
+      MULTIPLY_SERVICE_URL: http://multiply-service:8003
+    serviceType: LoadBalancer
+
+  - name: add-service
+    enabled: true
+    namespace: calculator
+    replicas: 2
+    port: 8001
+    image:
+      repository: 089580247689.dkr.ecr.ap-south-1.amazonaws.com/add-service
+      tag: v1.0.0
+    imagePullPolicy: Always
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    needsDbAccess: true
+    serviceAccount:
+      enabled: true
+    awsSecretName: qa-eks/calculator-db
+    secretKeys:
+      - DB_PASSWORD
+    serviceType: ClusterIP
+
+  - name: subtract-service
+    enabled: true
+    namespace: calculator
+    replicas: 2
+    port: 8002
+    image:
+      repository: 089580247689.dkr.ecr.ap-south-1.amazonaws.com/subtract-service
+      tag: v1.0.0
+    imagePullPolicy: Always
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    needsDbAccess: true
+    serviceAccount:
+      enabled: true
+    awsSecretName: qa-eks/calculator-db
+    secretKeys:
+      - DB_PASSWORD
+    serviceType: ClusterIP
+
+  - name: multiply-service
+    enabled: true
+    namespace: calculator
+    replicas: 2
+    port: 8003
+    image:
+      repository: 089580247689.dkr.ecr.ap-south-1.amazonaws.com/multiply-service
+      tag: v1.0.0
+    imagePullPolicy: Always
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    needsDbAccess: true
+    serviceAccount:
+      enabled: true
+    awsSecretName: qa-eks/calculator-db
+    secretKeys:
+      - DB_PASSWORD
+    serviceType: ClusterIP
