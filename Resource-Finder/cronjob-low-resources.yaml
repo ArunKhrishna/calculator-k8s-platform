@@ -1,0 +1,63 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: aws-resource-monitor-ap-south-1
+  namespace: devops-tools
+  labels:
+    app: aws-resource-monitor
+    region: ap-south-1
+spec:
+  schedule: "30 3 * * *"  # Daily at 3:30 AM UTC (9:00 AM IST)
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: aws-resource-monitor
+            region: ap-south-1
+        spec:
+          serviceAccountName: aws-resource-monitor-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: aws-resource-monitor
+            image: accountid.dkr.ecr.ap-south-1.amazonaws.com/aws-unused-resource-finder:latest
+            imagePullPolicy: Always
+            env:
+            - name: AWS_REGION
+              value: "ap-south-1"
+            - name: AWS_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCOUNT_ID
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: SLACK_WEBHOOK_URL
+            - name: SPREADSHEET_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: aws-resource-monitor-config
+                  key: SPREADSHEET_ID
+            resources:
+              requests:
+                memory: "128Mi"  # Reduced from 256Mi
+                cpu: "50m"       # Reduced from 100m
+              limits:
+                memory: "256Mi"  # Reduced from 512Mi
+                cpu: "200m"      # Reduced from 500m

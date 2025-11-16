@@ -1,0 +1,103 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops-tools
+  labels:
+    name: devops-tools
+    
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-resource-monitor-config
+  namespace: devops-tools
+data:
+  SPREADSHEET_ID: ""
+  
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-credentials
+  namespace: devops-tools
+type: Opaque
+stringData:
+  AWS_ACCOUNT_ID: "089580247689"
+  AWS_ACCESS_KEY_ID: ""  # You'll add this
+  AWS_SECRET_ACCESS_KEY: ""  # You'll add this
+  SLACK_WEBHOOK_URL: ""
+  
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aws-resource-monitor-sa
+  namespace: devops-tools
+  
+---
+# CronJob for ap-south-1 region (your primary region)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: aws-resource-monitor-ap-south-1
+  namespace: devops-tools
+  labels:
+    app: aws-resource-monitor
+    region: ap-south-1
+spec:
+  # Run daily at 3:30 AM UTC (9:00 AM IST)
+  schedule: "30 3 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid  # Don't run multiple jobs at once
+  jobTemplate:
+    spec:
+      backoffLimit: 2  # Retry up to 2 times if failed
+      template:
+        metadata:
+          labels:
+            app: aws-resource-monitor
+            region: ap-south-1
+        spec:
+          serviceAccountName: aws-resource-monitor-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: aws-resource-monitor
+            image: accountid.dkr.ecr.ap-south-1.amazonaws.com/aws-unused-resource-finder:latest
+            imagePullPolicy: Always
+            env:
+            - name: AWS_REGION
+              value: "ap-south-1"
+            - name: AWS_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCOUNT_ID
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: SLACK_WEBHOOK_URL
+            - name: SPREADSHEET_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: aws-resource-monitor-config
+                  key: SPREADSHEET_ID
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"  # Reduced for t2.micro node
+              limits:
+                memory: "512Mi"
+                cpu: "500m"

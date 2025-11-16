@@ -1,0 +1,20 @@
+# Ignore .terraform directories (which contain provider binaries and caches)
+**/.terraform/
+**/.terragrunt-cache/
+
+# Ignore Terraform lock files (if not needed in version control)
+*.tfstate
+*.tfstate.backup
+*.terraform.lock.hcl
+
+# Ignore provider binary files
+**/terraform-provider-*
+
+# Ignore temporary files created by text editors (e.g., VSCode, Sublime, etc.)
+*.swp
+*~
+.vscode/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db

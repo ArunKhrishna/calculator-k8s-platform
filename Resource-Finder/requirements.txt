@@ -1,0 +1,7 @@
+boto3==1.28.62
+gspread==5.11.3
+google-auth==2.23.3
+google-auth-oauthlib==1.1.0
+requests==2.31.0
+pytz==2023.3.post1
+python-dateutil==2.8.2
