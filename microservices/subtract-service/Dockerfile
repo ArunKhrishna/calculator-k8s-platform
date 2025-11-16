@@ -5,11 +5,13 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 FROM python:3.11-slim
 WORKDIR /app
-COPY --from=builder /root/.local /root/.local
-COPY app.py .
-ENV PATH=/root/.local/bin:$PATH
 
-RUN useradd -m -u 1000 calculator && chown -R calculator:calculator /app
+RUN useradd -m -u 1000 calculator
+COPY --from=builder --chown=calculator:calculator /root/.local /home/calculator/.local
+COPY --chown=calculator:calculator app.py .
+
+ENV PATH=/home/calculator/.local/bin:$PATH
+
 USER calculator
 
 EXPOSE 8002

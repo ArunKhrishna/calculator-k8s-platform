@@ -1,32 +1,28 @@
-# Multi-stage build for smaller image
 FROM python:3.11-slim as builder
-
 WORKDIR /app
-
-# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 FROM python:3.11-slim
-
 WORKDIR /app
 
-# Copy dependencies from builder
-COPY --from=builder /root/.local /root/.local
+# Create user FIRST
+RUN useradd -m -u 1000 calculator
+
+# Copy dependencies to calculator's home directory
+COPY --from=builder --chown=calculator:calculator /root/.local /home/calculator/.local
 
 # Copy application
-COPY app.py .
+COPY --chown=calculator:calculator app.py .
 
-# Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+# Set PATH to include user's local bin
+ENV PATH=/home/calculator/.local/bin:$PATH
 
-# Non-root user (security best practice)
-RUN useradd -m -u 1000 calculator && chown -R calculator:calculator /app
+# Switch to non-root user
 USER calculator
 
 EXPOSE 8001
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8001/health')"
 

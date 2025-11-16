@@ -14,7 +14,7 @@ spec:
   - port: {{ .port }}
     targetPort: {{ .port }}
     name: http
-  type: {{ .serviceType }}
+  type: {{ if eq .name "calculator-api" }}ClusterIP{{ else }}{{ .serviceType }}{{ end }}  # Changed calculator-api to ClusterIP
 ---
 {{- end }}
 {{- end }}
