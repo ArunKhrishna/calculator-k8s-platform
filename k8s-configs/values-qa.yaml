@@ -22,7 +22,7 @@ serviceAccount:
   enabled: true
   name: calculator-sa
   # Create IAM role with this trust policy for Secrets Manager access
-  iamRoleArn: arn:aws:iam::089580247689:role/qa-eks-calculator-secrets-role
+  iamRoleArn: arn:aws:iam::089580247689:role/eksctl-qa-eks-addon-iamserviceaccount-calcula-Role1-BnVBKeW5zyCB
 
 # Services configuration
 services:
