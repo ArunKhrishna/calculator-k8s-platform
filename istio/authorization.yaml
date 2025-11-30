@@ -1,0 +1,32 @@
+# Only allow calculator-api to call add-service
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: add-service-authz
+  namespace: calculator
+spec:
+  selector:
+    matchLabels:
+      app: add-service
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/calculator/sa/calculator-sa"]
+    to:
+    - operation:
+        methods: ["POST"]
+        paths: ["/add"]
+---
+# Deny all by default, then explicitly allow
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all-default
+  namespace: calculator
+spec:
+  action: DENY
+  rules:
+  - from:
+    - source:
+        notNamespaces: ["calculator"]

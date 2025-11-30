@@ -1,0 +1,26 @@
+# Inject delays for testing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: subtract-service-fault-injection
+  namespace: calculator
+spec:
+  hosts:
+  - subtract-service
+  http:
+  - fault:
+      delay:
+        percentage:
+          value: 10.0  # 10% of requests
+        fixedDelay: 5s  # 5 second delay
+      abort:
+        percentage:
+          value: 5.0  # 5% of requests fail
+        httpStatus: 500
+    route:
+    - destination:
+        host: subtract-service
+    timeout: 10s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s

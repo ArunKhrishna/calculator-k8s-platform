@@ -7,7 +7,7 @@ metadata:
   namespace: {{ .namespace }}
   labels:
     app: {{ .name }}
-    version: v1
+    version: {{ .version | default "v1" }}
 spec:
   replicas: {{ .replicas }}
   revisionHistoryLimit: 2
@@ -19,11 +19,12 @@ spec:
   selector:
     matchLabels:
       app: {{ .name }}
+      version: {{ .version | default "v1" }}
   template:
     metadata:
       labels:
         app: {{ .name }}
-        version: v1
+        version: {{ .version | default "v1" }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .port | quote }}

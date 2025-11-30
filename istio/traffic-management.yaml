@@ -1,0 +1,65 @@
+# Define subsets (versions) for add-service
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: add-service-versions
+  namespace: calculator
+spec:
+  host: add-service
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+---
+# Route 90% to v1, 10% to v2 (Canary Deployment)
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: add-service-canary
+  namespace: calculator
+spec:
+  hosts:
+  - add-service
+  http:
+  - match:
+    - headers:
+        user-type:
+          exact: beta-tester
+    route:
+    - destination:
+        host: add-service
+        subset: v2
+  - route:
+    - destination:
+        host: add-service
+        subset: v1
+      weight: 90
+    - destination:
+        host: add-service
+        subset: v2
+      weight: 10
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: 5xx,reset,connect-failure
+    timeout: 10s
