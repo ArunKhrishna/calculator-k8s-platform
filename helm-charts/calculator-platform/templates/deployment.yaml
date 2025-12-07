@@ -1,207 +1,103 @@
-
-{{- range .Values.services }}
-
-{{- if .enabled }}
-
-{{- range .versions }}
-
+{{- range $service := .Values.services }}
+{{- if $service.enabled }}
+{{- range $version := $service.versions }}
 apiVersion: apps/v1
-
 kind: Deployment
-
 metadata:
-
-  name: {{ $.name }}-{{ .name }}
-
-  namespace: {{ $.namespace }}
-
+  name: {{ $service.name }}-{{ $version.name }}
+  namespace: {{ $service.namespace }}
   labels:
-
-    app: {{ $.name }}
-
-    version: {{ .name }}
-
+    app: {{ $service.name }}
+    version: {{ $version.name }}
 spec:
-
-  replicas: {{ .replicas }}
-
+  replicas: {{ $version.replicas }}
   revisionHistoryLimit: 2
-
   strategy:
-
     type: RollingUpdate
-
     rollingUpdate:
-
       maxSurge: 1
-
       maxUnavailable: 0
-
   selector:
-
     matchLabels:
-
-      app: {{ $.name }}
-
-      version: {{ .name }}
-
+      app: {{ $service.name }}
+      version: {{ $version.name }}
   template:
-
     metadata:
-
       labels:
-
-        app: {{ $.name }}
-
-        version: {{ .name }}
-
+        app: {{ $service.name }}
+        version: {{ $version.name }}
       annotations:
-
         prometheus.io/scrape: "true"
-
-        prometheus.io/port: {{ $.port | quote }}
-
+        prometheus.io/port: {{ $service.port | quote }}
         prometheus.io/path: "/metrics"
-
-        {{- if $.needsDbAccess }}
-
-        checksum/config: {{ $$.Values.database | toYaml | sha256sum }}
-
+        {{- if $service.needsDbAccess }}
+        checksum/config: {{ $.Values.database | toYaml | sha256sum }}
         {{- end }}
-
     spec:
-
-      {{- if $.serviceAccount.enabled }}
-
-      serviceAccountName: {{ $$.Values.serviceAccount.name }}
-
+      {{- if $service.serviceAccount.enabled }}
+      serviceAccountName: {{ $.Values.serviceAccount.name }}
       {{- end }}
-
-      {{- if $.needsDbAccess }}
-
+      {{- if $service.needsDbAccess }}
       volumes:
-
         - name: secrets-store-inline
-
           csi:
-
             driver: secrets-store.csi.k8s.io
-
             readOnly: true
-
             volumeAttributes:
-
-              secretProviderClass: spc-{{ $.name }}
-
+              secretProviderClass: spc-{{ $service.name }}
       {{- end }}
-
       containers:
-
-      - name: {{ $.name }}
-
-        image: {{ $.image.repository }}:{{ .imageTag }}
-
-        imagePullPolicy: {{ $.imagePullPolicy }}
-
+      - name: {{ $service.name }}
+        image: {{ $service.image.repository }}:{{ $version.imageTag }}
+        imagePullPolicy: {{ $service.imagePullPolicy }}
         ports:
-
-        - containerPort: {{ $.port }}
-
+        - containerPort: {{ $service.port }}
           name: http
-
-        {{- if $.needsDbAccess }}
-
+        {{- if $service.needsDbAccess }}
         volumeMounts:
-
         - name: secrets-store-inline
-
           mountPath: "/mnt/secrets-store"
-
           readOnly: true
-
         {{- end }}
-
         envFrom:
-
         - configMapRef:
-
             name: calculator-config
-
-        {{- if $.needsDbAccess }}
-
+        {{- if $service.needsDbAccess }}
         - secretRef:
-
-            name: {{ $.name }}-csi
-
+            name: {{ $service.name }}-csi
         {{- end }}
-
         resources:
-
           requests:
-
-            cpu: {{ $.resources.requests.cpu }}
-
-            memory: {{ $.resources.requests.memory }}
-
+            cpu: {{ $service.resources.requests.cpu }}
+            memory: {{ $service.resources.requests.memory }}
           limits:
-
-            cpu: {{ $.resources.limits.cpu }}
-
-            memory: {{ $.resources.limits.memory }}
-
+            cpu: {{ $service.resources.limits.cpu }}
+            memory: {{ $service.resources.limits.memory }}
         livenessProbe:
-
           httpGet:
-
             path: /health
-
-            port: {{ $.port }}
-
+            port: {{ $service.port }}
           initialDelaySeconds: 10
-
           periodSeconds: 10
-
         readinessProbe:
-
           httpGet:
-
             path: /ready
-
-            port: {{ $.port }}
-
+            port: {{ $service.port }}
           initialDelaySeconds: 5
-
           periodSeconds: 5
-
       affinity:
-
         podAntiAffinity:
-
           preferredDuringSchedulingIgnoredDuringExecution:
-
           - weight: 100
-
             podAffinityTerm:
-
               labelSelector:
-
                 matchExpressions:
-
                 - key: app
-
                   operator: In
-
                   values:
-
-                  - {{ $.name }}
-
+                  - {{ $service.name }}
               topologyKey: topology.kubernetes.io/zone
-
 ---
-
 {{- end }}
-
 {{- end }}
-
 {{- end }}
-
