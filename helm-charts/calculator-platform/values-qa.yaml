@@ -1,283 +1,143 @@
-
 # Global configuration
-
 global:
-
   region: ap-south-1
-
   accountId: "089580247689"
-
   environment: qa
-
   ecrRegistry: 089580247689.dkr.ecr.ap-south-1.amazonaws.com
 
-
-
 # Database configuration
-
 database:
-
   host: qa-glad-aurora-cluster.cluster-c7qm0qcyyv66.ap-south-1.rds.amazonaws.com
-
   port: "5432"
-
   name: postgres
-
   user: postgres
-
   awsSecretName: qa-eks/calculator-db
-
   secretKeys:
-
     - DB_PASSWORD
 
-
-
 # Service Account with IRSA
-
 serviceAccount:
-
   enabled: true
-
   name: calculator-sa
-
   iamRoleArn: arn:aws:iam::089580247689:role/eksctl-qa-eks-addon-iamserviceaccount-calcula-Role1-BnVBKeW5zyCB
 
-
-
 # Services configuration with versions
-
 services:
-
   - name: calculator-api
-
     enabled: true
-
     namespace: calculator
-
     versions:
-
       - name: v1
-
         replicas: 3
-
         imageTag: v1.0.0
-
       - name: v2
-
         replicas: 2
-
         imageTag: v1.0.0
-
     port: 8000
-
     image:
-
       repository: 089580247689.dkr.ecr.ap-south-1.amazonaws.com/calculator-api
-
     imagePullPolicy: Always
-
     resources:
-
       requests:
-
         cpu: 100m
-
         memory: 128Mi
-
       limits:
-
         cpu: 200m
-
         memory: 256Mi
-
     needsDbAccess: false
-
     serviceAccount:
-
       enabled: false
-
     env:
-
       ADD_SERVICE_URL: http://add-service:8001
-
       SUBTRACT_SERVICE_URL: http://subtract-service:8002
-
       MULTIPLY_SERVICE_URL: http://multiply-service:8003
-
     serviceType: ClusterIP
-
-    
 
   - name: add-service
-
     enabled: true
-
     namespace: calculator
-
     versions:
-
       - name: v1
-
         replicas: 2
-
         imageTag: v1.0.0
-
       - name: v2
-
         replicas: 2
-
         imageTag: v1.0.0
-
     port: 8001
-
     image:
-
       repository: 089580247689.dkr.ecr.ap-south-1.amazonaws.com/add-service
-
     imagePullPolicy: Always
-
     resources:
-
       requests:
-
         cpu: 100m
-
         memory: 128Mi
-
       limits:
-
         cpu: 200m
-
         memory: 256Mi
-
     needsDbAccess: true
-
     serviceAccount:
-
       enabled: true
-
     awsSecretName: qa-eks/calculator-db
-
     secretKeys:
-
       - DB_PASSWORD
-
     serviceType: ClusterIP
-
-    
 
   - name: subtract-service
-
     enabled: true
-
     namespace: calculator
-
     versions:
-
       - name: v1
-
         replicas: 2
-
         imageTag: v1.0.0
-
       - name: v2
-
         replicas: 2
-
         imageTag: v1.0.0
-
     port: 8002
-
     image:
-
       repository: 089580247689.dkr.ecr.ap-south-1.amazonaws.com/subtract-service
-
     imagePullPolicy: Always
-
     resources:
-
       requests:
-
         cpu: 100m
-
         memory: 128Mi
-
       limits:
-
         cpu: 200m
-
         memory: 256Mi
-
     needsDbAccess: true
-
     serviceAccount:
-
       enabled: true
-
     awsSecretName: qa-eks/calculator-db
-
     secretKeys:
-
       - DB_PASSWORD
-
     serviceType: ClusterIP
 
-    
 
   - name: multiply-service
-
     enabled: true
-
     namespace: calculator
-
     versions:
-
       - name: v1
-
         replicas: 2
-
         imageTag: v1.0.0
-
       - name: v2
-
         replicas: 2
-
         imageTag: v1.0.0
-
     port: 8003
-
     image:
-
       repository: 089580247689.dkr.ecr.ap-south-1.amazonaws.com/multiply-service
-
     imagePullPolicy: Always
-
     resources:
-
       requests:
-
         cpu: 100m
-
         memory: 128Mi
-
       limits:
-
         cpu: 200m
-
         memory: 256Mi
-
     needsDbAccess: true
-
     serviceAccount:
-
       enabled: true
-
     awsSecretName: qa-eks/calculator-db
-
     secretKeys:
-
       - DB_PASSWORD
-
     serviceType: ClusterIP
 
