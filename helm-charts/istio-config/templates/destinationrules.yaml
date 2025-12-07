@@ -1,73 +1,37 @@
-
 {{- $services := list "calculator-api" "add-service" "subtract-service" "multiply-service" }}
-
 {{- range $services }}
-
 ---
-
 apiVersion: networking.istio.io/v1beta1
-
 kind: DestinationRule
-
 metadata:
-
   name: {{ . }}
-
   namespace: {{ $.Values.namespace }}
-
 spec:
-
   host: {{ . }}
-
   trafficPolicy:
-
     tls:
-
       mode: ISTIO_MUTUAL
-
     loadBalancer:
-
       simple: ROUND_ROBIN
-
     {{- if eq . "calculator-api" }}
-
     connectionPool:
-
       tcp:
-
         maxConnections: {{ $.Values.rateLimiting.maxConnections }}
-
       http:
-
         http1MaxPendingRequests: {{ $.Values.rateLimiting.http1MaxPendingRequests }}
-
         maxRequestsPerConnection: {{ $.Values.rateLimiting.maxRequestsPerConnection }}
-
     {{- end }}
-
     outlierDetection:
-
       consecutive5xxErrors: {{ $.Values.circuitBreaker.consecutive5xxErrors }}
-
       interval: {{ $.Values.circuitBreaker.interval }}
-
       baseEjectionTime: {{ $.Values.circuitBreaker.baseEjectionTime }}
-
       maxEjectionPercent: {{ $.Values.circuitBreaker.maxEjectionPercent }}
-
   subsets:
-
   - name: v1
-
     labels:
-
       version: v1
-
   - name: v2
-
     labels:
-
       version: v2
-
 {{- end }}
 

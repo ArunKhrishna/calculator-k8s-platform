@@ -1,81 +1,34 @@
-
-# Istio Configuration Values
-
 namespace: calculator
 
-
-
-# Traffic Management
-
 trafficSplit:
-
   calculatorApi:
-
     v1Weight: 80
-
     v2Weight: 20
-
   addService:
-
     v1Weight: 70
-
     v2Weight: 30
-
   subtractService:
-
     v1Weight: 60
-
     v2Weight: 40
-
   multiplyService:
-
     v1Weight: 50
-
     v2Weight: 50
 
-
-
-# Circuit Breaker Configuration
-
 circuitBreaker:
-
   consecutive5xxErrors: 5
-
   interval: 30s
-
   baseEjectionTime: 30s
-
   maxEjectionPercent: 50
 
-
-
-# Timeout Configuration
-
 timeouts:
-
   multiply: 3s
-
   default: 10s
 
-
-
-# Retry Configuration
-
 retries:
-
   attempts: 3
-
   perTryTimeout: 2s
 
-
-
-# Rate Limiting
-
 rateLimiting:
-
   maxConnections: 100
-
   http1MaxPendingRequests: 10
-
   maxRequestsPerConnection: 1
-

@@ -1,55 +1,74 @@
-
-{{- $services := list "add-service" "subtract-service" "multiply-service" }}
-
-{{- range $services }}
-
----
-
+# Add-Service Canary
 apiVersion: networking.istio.io/v1beta1
-
 kind: VirtualService
-
 metadata:
-
-  name: {{ . }}-canary
-
-  namespace: {{ $.Values.namespace }}
-
+  name: add-service-canary
+  namespace: {{ .Values.namespace }}
 spec:
-
   hosts:
-
-  - {{ . }}
-
+  - add-service
   http:
-
   - route:
-
     - destination:
-
-        host: {{ . }}
-
+        host: add-service
         subset: v1
-
-      weight: {{ index $.Values.trafficSplit (. | replace "-" "" | camelcase) "v1Weight" }}
-
+      weight: {{ .Values.trafficSplit.addService.v1Weight }}
     - destination:
-
-        host: {{ . }}
-
+        host: add-service
         subset: v2
-
-      weight: {{ index $.Values.trafficSplit (. | replace "-" "" | camelcase) "v2Weight" }}
-
+      weight: {{ .Values.trafficSplit.addService.v2Weight }}
     retries:
-
-      attempts: {{ $.Values.retries.attempts }}
-
-      perTryTimeout: {{ $.Values.retries.perTryTimeout }}
-
+      attempts: {{ .Values.retries.attempts }}
+      perTryTimeout: {{ .Values.retries.perTryTimeout }}
       retryOn: 5xx,reset,connect-failure
-
-    timeout: {{ $.Values.timeouts.default }}
-
-{{- end }}
-
+    timeout: {{ .Values.timeouts.default }}
+---
+# Subtract-Service Canary
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: subtract-service-canary
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+  - subtract-service
+  http:
+  - route:
+    - destination:
+        host: subtract-service
+        subset: v1
+      weight: {{ .Values.trafficSplit.subtractService.v1Weight }}
+    - destination:
+        host: subtract-service
+        subset: v2
+      weight: {{ .Values.trafficSplit.subtractService.v2Weight }}
+    retries:
+      attempts: {{ .Values.retries.attempts }}
+      perTryTimeout: {{ .Values.retries.perTryTimeout }}
+      retryOn: 5xx,reset,connect-failure
+    timeout: {{ .Values.timeouts.default }}
+---
+# Multiply-Service Canary
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: multiply-service-canary
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+  - multiply-service
+  http:
+  - route:
+    - destination:
+        host: multiply-service
+        subset: v1
+      weight: {{ .Values.trafficSplit.multiplyService.v1Weight }}
+    - destination:
+        host: multiply-service
+        subset: v2
+      weight: {{ .Values.trafficSplit.multiplyService.v2Weight }}
+    retries:
+      attempts: {{ .Values.retries.attempts }}
+      perTryTimeout: {{ .Values.retries.perTryTimeout }}
+      retryOn: 5xx,reset,connect-failure
+    timeout: {{ .Values.timeouts.multiply }}
