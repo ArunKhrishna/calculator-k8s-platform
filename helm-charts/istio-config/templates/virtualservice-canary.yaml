@@ -1,0 +1,55 @@
+
+{{- $services := list "add-service" "subtract-service" "multiply-service" }}
+
+{{- range $services }}
+
+---
+
+apiVersion: networking.istio.io/v1beta1
+
+kind: VirtualService
+
+metadata:
+
+  name: {{ . }}-canary
+
+  namespace: {{ $.Values.namespace }}
+
+spec:
+
+  hosts:
+
+  - {{ . }}
+
+  http:
+
+  - route:
+
+    - destination:
+
+        host: {{ . }}
+
+        subset: v1
+
+      weight: {{ index $.Values.trafficSplit (. | replace "-" "" | camelcase) "v1Weight" }}
+
+    - destination:
+
+        host: {{ . }}
+
+        subset: v2
+
+      weight: {{ index $.Values.trafficSplit (. | replace "-" "" | camelcase) "v2Weight" }}
+
+    retries:
+
+      attempts: {{ $.Values.retries.attempts }}
+
+      perTryTimeout: {{ $.Values.retries.perTryTimeout }}
+
+      retryOn: 5xx,reset,connect-failure
+
+    timeout: {{ $.Values.timeouts.default }}
+
+{{- end }}
+

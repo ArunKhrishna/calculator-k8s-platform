@@ -1,0 +1,67 @@
+
+apiVersion: argoproj.io/v1alpha1
+
+kind: Application
+
+metadata:
+
+  name: istio-config-qa
+
+  namespace: argocd
+
+spec:
+
+  project: calculator
+
+  
+
+  source:
+
+    repoURL: https://github.com/ArunKhrishna/calculator-k8s-platform.git
+
+    targetRevision: main
+
+    path: helm-charts/istio-config
+
+    helm:
+
+      releaseName: istio-config
+
+      valueFiles:
+
+        - values.yaml
+
+  
+
+  destination:
+
+    server: https://kubernetes.default.svc
+
+    namespace: calculator
+
+  
+
+  syncPolicy:
+
+    automated:
+
+      prune: true
+
+      selfHeal: true
+
+    syncOptions:
+
+      - CreateNamespace=false
+
+    retry:
+
+      limit: 5
+
+      backoff:
+
+        duration: 5s
+
+        factor: 2
+
+        maxDuration: 3m
+

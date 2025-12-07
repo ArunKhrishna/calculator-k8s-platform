@@ -1,0 +1,41 @@
+
+apiVersion: networking.istio.io/v1beta1
+
+kind: VirtualService
+
+metadata:
+
+  name: calculator-api-main
+
+  namespace: {{ .Values.namespace }}
+
+spec:
+
+  hosts:
+
+  - "*"
+
+  gateways:
+
+  - calculator-gateway
+
+  http:
+
+  - route:
+
+    - destination:
+
+        host: calculator-api
+
+        subset: v1
+
+      weight: {{ .Values.trafficSplit.calculatorApi.v1Weight }}
+
+    - destination:
+
+        host: calculator-api
+
+        subset: v2
+
+      weight: {{ .Values.trafficSplit.calculatorApi.v2Weight }}
+
