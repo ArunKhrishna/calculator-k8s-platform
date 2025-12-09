@@ -4,7 +4,7 @@ A production-grade microservices platform demonstrating enterprise DevOps practi
 
 ## 🎯 Project Overview
 
-This project showcases a fully functional calculator application built as a microservices architecture, deployed on AWS EKS with advanced traffic management, observability, and security features. The platform demonstrates real-world production patterns suitable for Salesforce-scale enterprise environments.
+This project showcases a fully functional calculator application built as a microservices architecture, deployed on AWS EKS with advanced traffic management, observability, and security features. The platform demonstrates real-world production patterns suitable for reliant environments.
 
 ### Architecture
 
